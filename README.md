@@ -1,20 +1,82 @@
-# sta141c
-UC Davis SQ 2024 STA141C Final Project
+# Myocardial Infarction Analysis
 
-# Git Commands 
-(All of this is done using the terminal and the GitHub interface)
+UC Davis STA 141C (Statistical Computing) — Spring Quarter 2024 Final Project
 
-# Cloning the Repository to your Machine
-In your terminal, nagivate to a place where you want to save the GitHub repository locally. You can do this by running 'cd "directory_you_want_to_save_the_repository_in"' Then, navigate to the repository homepage on GitHub. Click the green "Code" button. Copy the link that's shown in the dropdown. In your terminal (while you're in the appropriate directory), run 'git clone "the_link_you_copied"'. This will clone the repository to your machine. 
+## Overview
 
-## Switching between branches 
-Running 'git checkout "branch_name"' allows you to switch to different branches. You'll almost want to stay in your own branch.
+This project analyzes the [UCI Myocardial Infarction Complications dataset](https://archive.ics.uci.edu/dataset/579/myocardial+infarction+complications) (dataset ID 579), which contains clinical data from 1,700 heart attack patients with 112 features. The goal is to preprocess the data, handle missing values, and perform correlation analysis as a foundation for imputation and classification of patient outcomes (target variable: `LET_IS`).
 
-## Push Requests
-### NEVER PUSH TO MAIN
-Once you've completed a task, you'll want to push your code to your branch. To do this, make sure you are currently checked into your own branch. To do this, run 'git checkout "your_branch"' to check into your branch. Then, run 'git add "your_file_name"' to stage your changes. This doesn't push anything; think of it as prepping your file to be pushed. If you want to stage changes for all your files, you can type "git add .". The period stages changes for every file in the git folder. After that, run 'git commit -m "a message about what your new code does"'. Adding the message will help users understand what changes you've made. Once you've done that, run "git push". This will push your code to your branch. 
+## Dataset
 
-## Pull Requests 
-Typically, you'll want to pull when the main branch has been updated with other people's code. In this case, click the "Pull Requests" button in the ribbon at the top of the GitHub interface. Then, click the "New Pull Request button. Change the left dropdown option (the one that the arrow points to) to your branch. Change the right dropdown option (the one that the arrow extends from) to main. Then, click "Create Pull Request". If there are no conflicts, a green button will pop up that says "Merge Pull Request". Click that button and you will have the updated code saved on your machine.
+- **Source**: UCI ML Repository (`ucimlrepo`, dataset ID 579)
+- **Size**: 1,700 patients × 112 features
+- **Target**: `LET_IS` — lethal outcome / in-hospital complication category
+- **Feature types**: Binary (74), Categorical (22), Continuous (9)
 
-Alternatively, you can do all of this in the terminal. Run "git checkout main" to switch to the main branch. Then, run "git status" to check if your branch is up to date. If it is not, run "git fetch" to fetch the new code. Then, run "git pull" to pull all the code locally. 
+## Project Structure
+
+```
+myocardial-infarction-analysis/
+├── final_project.ipynb              # Main analysis notebook
+├── utils.py                         # Utility functions for correlation analysis
+├── myocardial-infarction-analysis.pdf  # Written report
+└── presentation copy.pdf            # Slide deck
+```
+
+## Methodology
+
+### 1. Data Cleaning
+- Dropped columns with more than 25% missing values (112 → 105 columns)
+- Dropped rows missing more than 25% of their values (1,700 → 1,624 rows)
+
+### 2. Data Type Classification
+Features are classified into three types to apply appropriate correlation measures:
+- **Binary**: 2 unique values — e.g., `SEX`, ECG rhythm flags, complication indicators
+- **Categorical**: 3–10 unique values — e.g., `INF_ANAM`, `FK_STENOK`, infarction location
+- **Continuous**: >10 unique values — e.g., `AGE`, blood pressure (`S_AD_ORIT`, `D_AD_ORIT`), lab values
+
+### 3. Correlation Analysis (for Imputation)
+Type-appropriate correlation metrics were computed to identify the strongest predictors for each feature (used to guide missing value imputation):
+- **Binary–Binary**: Phi coefficient matrix
+- **Categorical–Categorical**: Cramér's V matrix
+- **Continuous–Continuous**: Spearman correlation matrix
+
+Top 5 most correlated predictors were extracted for each variable.
+
+### 4. Bootstrap Resampling
+Each subset (binary, categorical, continuous) was oversampled at 1.25× with replacement to support downstream modeling.
+
+## Utility Functions (`utils.py`)
+
+| Function | Description |
+|---|---|
+| `data_type_classifier(df)` | Classifies each column as Binary, Categorical, or Continuous |
+| `compute_phi_matrix(df)` | Pearson/Phi coefficient matrix for binary variables |
+| `compute_cramers_v_matrix(df)` | Cramér's V correlation matrix for categorical variables |
+| `top_correlated_predictors_df(corr_matrix)` | Returns top N correlated predictors per variable |
+| `top_correlated_categorical_all(df)` | Top correlated categorical pairs using Cramér's V |
+| `top_correlated_continuous_all(corr_matrix)` | Top correlated continuous pairs by absolute correlation |
+
+## Setup
+
+**Requirements**: Python 3.11+
+
+```bash
+pip install numpy pandas polars scipy ucimlrepo
+```
+
+**Run the notebook**:
+
+```bash
+jupyter notebook final_project.ipynb
+```
+
+## Team
+
+| Member | Columns (0-indexed) |
+|---|---|
+| Manish | 0–27 |
+| Soto | 28–55 |
+| Owen | 56–83 |
+| Anna | 84–111 |
+
